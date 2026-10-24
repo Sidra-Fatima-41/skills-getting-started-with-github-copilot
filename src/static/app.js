@@ -38,7 +38,37 @@ document.addEventListener("DOMContentLoaded", () => {
         participantsList.className = "participants-list";
         details.participants.forEach((participant) => {
           const participantItem = document.createElement("li");
-          participantItem.textContent = participant;
+          const participantEmail = document.createElement("span");
+          participantEmail.textContent = participant;
+          participantItem.appendChild(participantEmail);
+
+          const unregisterButton = document.createElement("button");
+          unregisterButton.className = "unregister-button";
+          unregisterButton.type = "button";
+          unregisterButton.title = `Unregister ${participant}`;
+          unregisterButton.setAttribute(
+            "aria-label",
+            `Unregister ${participant}`
+          );
+          unregisterButton.textContent = "×";
+          unregisterButton.addEventListener("click", async () => {
+            try {
+              const response = await fetch(
+                `/activities/${encodeURIComponent(name)}/signup?email=${encodeURIComponent(participant)}`,
+                { method: "DELETE" }
+              );
+              const result = await response.json();
+
+              if (!response.ok) {
+                throw new Error(result.detail || "Failed to unregister");
+              }
+
+              await fetchActivities();
+            } catch (error) {
+              console.error("Error unregistering participant:", error);
+            }
+          });
+          participantItem.appendChild(unregisterButton);
           participantsList.appendChild(participantItem);
         });
         participantsSection.appendChild(participantsList);
@@ -79,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        await fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
